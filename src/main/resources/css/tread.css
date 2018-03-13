@@ -1,0 +1,11 @@
+.root {
+
+}
+
+.library-item {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);
+}
+
+.library-item:hover {
+    -fx-opacity: 0.75;
+}
