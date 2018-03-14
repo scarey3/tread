@@ -2,6 +2,7 @@ package xyz.scarey.tread.controller;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -115,28 +116,13 @@ public class MainController {
 
                     directoryId = SqlUtil.getLastIntRow(connection, "Directories", "id");
                     seriesId = SqlUtil.getLastIntRow(connection, "Series", "id");
-
-
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-
                 log.log(Level.INFO, "Directory and series added to database");
             }
-
             File[] files = findFiles(selectedDirectory);
-            int volume = 1;
-            for (File f : files) {
-
-                try {
-                    int comicId = addComic(f, directoryId, seriesId, volume++);
-                    getComicCover(f, comicId);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                log.log(Level.INFO, "Volume " + (volume - 1) + " added");
-            }
-            showSeries();
+            addFiles(files, directoryId, seriesId);
         }
     }
 
@@ -159,9 +145,7 @@ public class MainController {
             while (rs.next()) {
                 int seriesId = rs.getInt("s_id");
                 LibraryItem libraryItem = new LibraryItem(seriesId, rs.getInt("c_id"), false);
-
                 libraryItem.setOnMouseClicked(event -> showComics(seriesId));
-
                 libraryPane.getChildren().add(libraryItem);
             }
         } catch (SQLException e) {
@@ -222,6 +206,37 @@ public class MainController {
 
     private File[] findFiles(File dir) {
         return dir.listFiles((dir1, name) -> name.endsWith(".cbz"));
+    }
+
+    private void addFiles(File[] files, int directoryId, int seriesId) {
+        Task task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                int volume = 1;
+                for (File f : files) {
+                    try {
+                        int comicId = addComic(f, directoryId, seriesId, volume++);
+                        getComicCover(f, comicId);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    updateProgress(volume-1, files.length);
+                    log.log(Level.INFO, "Volume " + (volume - 1) + " added");
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void succeeded() {
+                progressBar.setVisible(false);
+                showSeries();
+            }
+        };
+
+        progressBar.setVisible(true);
+        progressBar.progressProperty().bind(task.progressProperty());
+        new Thread(task).start();
     }
 
     private void getComicCover(File f, int comicId) throws IOException {
