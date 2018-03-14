@@ -11,7 +11,14 @@ public class Comic {
     private IntegerProperty seriesId = new SimpleIntegerProperty();
     private IntegerProperty volume = new SimpleIntegerProperty();
     private IntegerProperty chapter = new SimpleIntegerProperty();
-    private StringProperty url = new SimpleStringProperty();
+    private StringProperty uri = new SimpleStringProperty();
+
+    public Comic(int id, int seriesId, int volume, String uri) {
+        this.id.set(id);
+        this.seriesId.set(seriesId);
+        this.volume.set(volume);
+        this.uri.set(uri);
+    }
 
     public int getId() {
         return id.get();
@@ -62,14 +69,14 @@ public class Comic {
     }
 
     public String getUrl() {
-        return url.get();
+        return uri.get();
     }
 
     public StringProperty urlProperty() {
-        return url;
+        return uri;
     }
 
     public void setUrl(String url) {
-        this.url.set(url);
+        this.uri.set(url);
     }
 }
